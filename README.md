@@ -25,4 +25,6 @@ python setup.py sdist
 
 # upload new dist [CLI]
 twine upload dist/*
+
+commit
 ```

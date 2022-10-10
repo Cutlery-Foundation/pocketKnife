@@ -61,7 +61,7 @@ class SaveLoad():
     
 
     def to_pickle(self, obj: object, filename: str) -> None:
-        path = self.folder_data_path / filename
+        path = self.folder_models_path / filename
         start = time.time()
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'wb') as f:
@@ -71,7 +71,7 @@ class SaveLoad():
         logging.info(f'Object saved to {path} in {end - start} seconds')
     
     def from_pickle(self, filename: str) -> object:
-        path = self.folder_data_path / filename
+        path = self.folder_models_path / filename
         start = time.time()
         with open(path, 'rb') as f:
             obj = pickle.load(f)
@@ -95,7 +95,8 @@ class SaveLoad():
         logging.info(f'Dataframe loaded from {path}, with {len(df)} rows, in {end - start} seconds')
         return df
     
-    def from_csv(self, path: Path) -> pd.DataFrame:
+    def from_csv(self, filename: str) -> pd.DataFrame:
+        path = self.folder_data_path / filename
         start = time.time()
         df = pd.read_csv(path, sep="\-\|\-", encoding='ISO-8859-1', engine='python')
         end = time.time()
