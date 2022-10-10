@@ -26,5 +26,7 @@ python setup.py sdist
 # upload new dist [CLI]
 twine upload dist/*
 
-commit
+# commit new dist [CLI]
+git commit -am "0.0.9"
+git push
 ```
