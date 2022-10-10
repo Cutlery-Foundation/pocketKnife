@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='pocketKnife',
-    version='0.0.7',
+    version='0.0.8',
     maintainer='Cutlery Foundation',
     maintainer_email='cutlery.foundation@gmail.com',
     description='A collection of useful functions for any data scientist working with NLP',

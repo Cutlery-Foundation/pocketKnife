@@ -37,12 +37,8 @@ logging.basicConfig(format='%(asctime)s - %(message)s',
                     handlers=[LoggingHandler()])
 
 # todo
-# add no preprocess limpa espaço em branco [feito]
-# matcher bow -> dict [100%]
 # arquivos com listas longas daqui [back]
 # add remove nomes próprios bem no inicio [sim]
-
-# import pt_core_legal_lg
 
 nlp = spacy.load("pt_core_news_lg")
 nlp.max_length=9000000000
