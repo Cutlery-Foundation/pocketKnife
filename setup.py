@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='pocketKnife',
-    version='0.0.1',
+    version='0.0.2',
     maintainer='Cutlery Foundation',
     maintainer_email='cutlery.foundation@gmail.com',
     description='A collection of useful functions for any data scientist working with NLP',
@@ -37,11 +37,11 @@ setuptools.setup(
     ],
     extras_require={
         'cuda': [
-            'torch @ https://download.pytorch.org/whl/cu117',
-            'torchvision @ https://download.pytorch.org/whl/cu117',
-            'torchaudio @ https://download.pytorch.org/whl/cu117',
+            'torch',
+            'torchvision',
+            'torchaudio',
             'spacy[transformers,lookups,cuda117]==3.4.1',
         ]
     },
-    # dependency_links=['https://download.pytorch.org/whl/cu117',]
+    dependency_links=['https://download.pytorch.org/whl/cu117',]
 )
