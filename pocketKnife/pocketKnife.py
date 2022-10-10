@@ -12,7 +12,8 @@ from spacy.tokens.doc import Doc
 import scipy.sparse as sp
 
 # https://stackoverflow.com/questions/33945261/how-to-specify-multiple-return-types-using-type-hints
-from typing import List, Literal, Union, Tuple
+from typing import List, Union, Tuple
+from typing_extensions import Literal
 from pathlib import Path
 import pickle
 from collections import Counter

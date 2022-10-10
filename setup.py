@@ -2,14 +2,14 @@ import setuptools
 
 setuptools.setup(
     name='pocketKnife',
-    version='0.0.2',
+    version='0.0.7',
     maintainer='Cutlery Foundation',
     maintainer_email='cutlery.foundation@gmail.com',
     description='A collection of useful functions for any data scientist working with NLP',
     packages=['pocketKnife'],
     url='https://github.com/Cutlery-Foundation/PocketKnife',
     install_requires=[
-        'pandas==1.5.0',
+        'pandas>=1.3.5', #1.5.0
         'matplotlib',
         'plotly',
         'scikit-learn',
@@ -18,10 +18,10 @@ setuptools.setup(
         'lightgbm',
         'xgboost',
         'catboost',
-        'ipython',
+        # 'ipython',
         'ipywidgets==8.0.2',
         'ipympl',
-        'scipy==1.9.1',
+        'scipy==1.7.3', #1.9.1
         'wordcloud==1.8.2.2',
         'black==22.10.0',
         'beautifulsoup4==4.11.1',
@@ -31,7 +31,7 @@ setuptools.setup(
         'setuptools==65.4.1',
         'wheel==0.37.1',
         'spacy==3.4.1',
-        'ipykernel==6.16.0',
+        # 'ipykernel==6.16.0',
         'seaborn==0.12.0',
         'pyarrow==9.0.0',
     ],
