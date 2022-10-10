@@ -1292,7 +1292,7 @@ def do_corpus_embeddings_gpu(
 
     """
     print(__name__)
-    if __name__ in ['__main__','pocketknife_nlp']:
+    if __name__ in ['__main__','pocketknife_nlp','pocketKnife.pocketKnife']:
         start = time.time()
         # embedder = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
         embedder = SentenceTransformer("multi-qa-mpnet-base-cos-v1")
