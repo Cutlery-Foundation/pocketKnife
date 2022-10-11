@@ -12,7 +12,7 @@ from spacy.tokens.doc import Doc
 import scipy.sparse as sp
 
 # https://stackoverflow.com/questions/33945261/how-to-specify-multiple-return-types-using-type-hints
-from typing import List, Union, Tuple
+from typing import Iterable, List, Union, Tuple
 from typing_extensions import Literal
 from pathlib import Path
 import pickle
@@ -30,6 +30,8 @@ from scipy.sparse import csr_matrix
 
 from sklearn.linear_model import LogisticRegression, SGDClassifier, PassiveAggressiveClassifier
 
+import streamlit as st
+
 
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%m-%Y %H:%M:%S',
@@ -46,9 +48,11 @@ matcher = spacy.matcher.Matcher(nlp.vocab)
 
 class SaveLoad():
     def __init__(self,
-        home_path: str = '/home/jupyter',
-        data_subfolder: str = 'data/raw',
-        models_subfolder: str = 'models') -> None:
+        # home_path: str = '/home/jupyter', # no colab
+        # data_subfolder: str = 'data/raw', # no colab
+        home_path: str,
+        data_subfolder: str,
+        models_subfolder: str) -> None:
         
         self.folder_home_path = Path(home_path)
         self.folder_data_path = self.folder_home_path / data_subfolder
@@ -111,6 +115,8 @@ class SaveLoad():
             self.to_pickle(embedder, self.folder_models_path / f'{used_embedder}_{dataset_filter}_embedder.dat')
             self.to_pickle(corpus_embeddings, self.folder_models_path / f'{used_embedder}_{dataset_filter}_corpus_embeddings.dat')
 
+
+    @st.cache(allow_output_mutation=True)
     def load_embedder_and_corpus_embeddings(self,
         used_embedder: str,
         dataset_filter: str) -> Tuple[np.ndarray, SentenceTransformer]:
@@ -171,6 +177,7 @@ def cleanString(series: str) -> str:
     Ref replacement_dict:
     https://ajuda.locaweb.com.br/wiki/caracteres-acentuados-hospedagem-de-sites/
     """
+    from unidecode import unidecode
     replacement_dic = {
         "&aacute;": "a",
         "&eacute;": "e",
@@ -259,6 +266,7 @@ def cleanString(series: str) -> str:
     for x, y in replacement_dic.items():
         series = str(series).lower()
         series = series.replace(x, y)
+        series = unidecode(series)
     return series
 
 
@@ -864,7 +872,12 @@ def bow_inverse_ratio_tfidf_word_agg(
     return vectorizer.get_feature_names(), bow
 
 
-def add_rules(matcher: spacy.matcher.Matcher) -> spacy.matcher.Matcher:
+def add_rules(
+    matcher: spacy.matcher.Matcher,
+    optional_new_parameters: Union[
+        Iterable[Iterable[str]],
+        None
+    ] = None) -> spacy.matcher.Matcher:
     """Cria padrões de matcher para a extração dos sintagmas nominais
 
     Parameters
@@ -888,21 +901,40 @@ def add_rules(matcher: spacy.matcher.Matcher) -> spacy.matcher.Matcher:
     """
     old_patterns = [
         ## sintagmas nominais nível 5
-        ["NOUM","NOUM","NOUM","NOUM","ADJ"],  ## nova regra - existem ocorrências de termos importantes com esta regra
+        [
+            "NOUM",
+            "NOUM",
+            "NOUM",
+            "NOUM",
+            "ADJ",
+        ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         ## sintagmas nominais nível 4
-        ["NOUM","NOUM","NOUM","ADJ"],  ## nova regra - existem ocorrências de termos importantes com esta regra
+        [
+            "NOUM",
+            "NOUM",
+            "NOUM",
+            "ADJ",
+        ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         ## sintagmas nominais nível 3
-        ["NOUM","ADJ","ADJ"],  ## nova regra - existem ocorrências de termos importantes com esta regra
-        ["NOUM","NOUM","ADJ"],  ## nova regra - existem ocorrências de termos importantes com esta regra
+        [
+            "NOUM",
+            "ADJ",
+            "ADJ",
+        ],  ## nova regra - existem ocorrências de termos importantes com esta regra
+        [
+            "NOUM",
+            "NOUM",
+            "ADJ",
+        ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         ["NOUN", "ADJ", "NOUN"],
         ["NOUN", "ADJ", "PROPN"],
         ["PROPN", "NOUM", "ADJ"],
         ["PROPN", "ADJ", "NOUN"],
         ## sintagmas_nominais nível 2
-        # ["PROPN", "ADJ"], 
+        ["PROPN", "ADJ"], 
         # ["PROPN", "PROPN"],
         # ["PROPN", "NOUN"],
-        # ["NOUN", "ADJ"],
+        ["NOUN", "ADJ"],
         # ["NOUN", "NOUN"],
         # ["NOUN", "PROPN"],
         ## sintagmas nominais nível 1
@@ -914,21 +946,29 @@ def add_rules(matcher: spacy.matcher.Matcher) -> spacy.matcher.Matcher:
     patterns = [  
         ## sintagmas nominais nível 3
         ["PROPN","ADP","NOUM"],
+        ["PROPN","ADJ","NOUM"],
+        ["NOUM","ADJ","NOUM"],
+
         ## sintagmas nominais nível 2
         ["PROPN","PROPN"],
+        ["PROPN","VERB"],
         ["NOUM","VERB"],
         ["NOUM","ADJ"],
         ["PROPN","ADJ"],
         ["NOUM","PROPN"],    
         ["NOUM","NOUN"],
-        # ["PROPN","NOUM"],
+        ["PROPN","NOUM"],
+
         ## sintagmas nominais nível 1
-        # ["NOUN"],
-        # ["PROPN"],
-#         ["ADJ"],
-        ["VERB"]
+        ["NOUN"],
+        ["PROPN"],
+        ["ADJ"],
+        ["VERB"],
     ]
-    patterns = old_patterns
+    # patterns = old_patterns
+
+    if optional_new_parameters:
+        patterns = optional_new_parameters
 
     # Iteração que coloca em formato de dicionário os padrões PoS-Tag contidos em patterns
     patterns_list = list()
@@ -949,6 +989,7 @@ matcher = add_rules(matcher)
 def extract_patterns(
     text_list: list,
     corpus_and_bow: Literal['corpus','bow'],
+    analyze_mode: bool = False,
 ) -> pd.DataFrame:
     """Função de extração de termos conforme padrões de match
 
@@ -969,34 +1010,20 @@ def extract_patterns(
     """
     corpus_list = list()
     bow_list = list()
+    analyze_corpus_list = list()
     for doc in (nlp(text) for text in text_list):
         matches = matcher(doc)
         current_doc_bow = ""
         current_doc_corpus = ""
+        analyze_current_doc_corpus = []
         for match_id, start, end in matches:
             string_id = nlp.vocab.strings[match_id]
             match_span = doc[start:end]
-            if string_id in [
-                "id-0",
-                "id-1",
-                "id-2",
-                "id-3",
-                "id-4",
-                "id-5",
-                "id-6",
-                "id-7",
-                "id-8",
-                "id-9",
-                "id-10",
-                "id-11",
-                "id-12",
-                "id-13",
-                "id-14",
-                # "id-15",
-                # "id-16",
-            ]:
+            if string_id[:3] == "id-":
                 match_span_text = list(str(match_span.text).split())
                 matcher_ngram = ""
+                if analyze_mode:
+                    analyze_current_doc_corpus.append((match_span_text, string_id))
                 for word in match_span_text:
                     if 'corpus' in corpus_and_bow:
                         if word not in current_doc_corpus:
@@ -1015,11 +1042,19 @@ def extract_patterns(
             corpus_list.append(current_doc_corpus)
         if 'bow' in corpus_and_bow:
             bow_list.append(current_doc_bow)
+        if analyze_mode:
+            analyze_corpus_list.append(analyze_current_doc_corpus)
     if 'corpus' in corpus_and_bow:
         df = pd.DataFrame({'features_corpus': corpus_list})
     if 'bow' in corpus_and_bow:
         df1 = pd.DataFrame({'features_bow': bow_list})
-        if not ('corpus' in corpus_and_bow):
+        if 'corpus' not in corpus_and_bow:
+            df = df1
+        else:
+            df = pd.concat([df, df1],axis=1)
+    if analyze_mode:
+        df1 = pd.DataFrame({'analyze_corpus': analyze_corpus_list})
+        if ('corpus' not in corpus_and_bow) and ('bow' not in corpus_and_bow):
             df = df1
         else:
             df = pd.concat([df, df1],axis=1)
@@ -1028,7 +1063,8 @@ def extract_patterns(
 
 def do_preprocess(
     corpus_and_bow: Literal['corpus','bow'],
-    df: pd.Series
+    df: pd.Series,
+    analyze_mode: bool = False,
 ) -> pd.DataFrame(columns=['features_corpus','features_bow']):
     """Executa pré-processamento em dados
 
@@ -1061,7 +1097,8 @@ def do_preprocess(
             X,
             extract_patterns(
                 X['features'].tolist(),
-                corpus_and_bow=corpus_and_bow
+                corpus_and_bow=corpus_and_bow,
+                analyze_mode=analyze_mode,
             )
         ],
         axis=1
@@ -1275,7 +1312,12 @@ def parallelize_anything(
 
 
 def do_corpus_embeddings_gpu(
-    corpus: pd.Series, col: str
+    corpus: pd.Series, 
+    col: str,
+    target_devices: Literal['cuda', 'cpu', None]='cuda',
+    with_gpu_mode_process: bool=False,
+    with_config_gpu_params: bool=False,
+    n_chunk_size: Union[int, None]=None
 ) -> Tuple[np.ndarray, SentenceTransformer]:
     """Executa encoding e embedding dos sintagmas nominais
 
@@ -1292,14 +1334,80 @@ def do_corpus_embeddings_gpu(
 
     """
     print(__name__)
+
     if __name__ in ['__main__','pocketknife_nlp','pocketKnife.pocketKnife']:
+        
+        import torch
+        import py3nvml
+        import multiprocessing
+        import torch.multiprocessing as mp
+        import os
+
+        QTD_CORES=multiprocessing.cpu_count() - 1
+
+        def gpu_mode_process(
+            max_split_size_mb: Union[int, None]=128,
+            set_start_method: Union['spawn', 'fork', None]='spawn'
+        ):
+            ## https://discuss.pytorch.org/t/keep-getting-cuda-oom-error-with-pytorch-failing-to-allocate-all-free-memory/133896/6
+            os.environ["PYTORCH_CUDA_ALLOC_CONF"]=f'max_split_size_mb:{max_split_size_mb}'
+            mp.set_start_method('spawn')
+
+        def config_gpu_params(
+            num_gpus: Union[int, list] = 1,
+            gpu_select: Union[int, list] = 0,
+            gpu_fraction: Union[float, None] = .95,
+            max_procs: Union[int, None] = -1,
+            gpu_min_memory: Union[int, None] = 256,
+            # max_split_size_mb: Union[int, None] = None,
+        ):
+            py3nvml.utils.grab_gpus(
+                num_gpus=num_gpus, # How many gpus your job needs (optional). Can set to -1 to take all
+                            # remaining available GPUs.
+                gpu_select=gpu_select, # A single int or an iterable of ints indicating gpu numbers to
+                            # search through. If None, will search through all gpus.
+                gpu_fraction=gpu_fraction, # The fractional of a gpu memory that must be free for the script to see
+                                # the gpu as free. Defaults to 1. Useful if someone has grabbed a tiny
+                                # amount of memory on a gpu but isn't using it.
+                max_procs=max_procs, # Maximum number of processes allowed on a GPU (as well as memory restriction).
+                env_set_ok=True, # If false, will complain if CUDA_VISIBLE_DEVICES is already set.
+                gpu_min_memory=gpu_min_memory # The minimal allowed graphics card memory amount in MiB.
+            )
+            # os.environ["PYTORCH_CUDA_ALLOC_CONF"]=f'max_split_size_mb:{max_split_size_mb}'
+
         start = time.time()
-        # embedder = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
-        embedder = SentenceTransformer("multi-qa-mpnet-base-cos-v1")
+
+        # embedder = SentenceTransformer("multi-qa-mpnet-base-cos-v1")
+        embedder = SentenceTransformer("multi-qa-mpnet-base-dot-v1")
+
+        if target_devices is None:
+            if torch.cuda.is_available():
+                # target_devices = ['cuda:{}'.format(i) for i in range(torch.cuda.device_count())]
+                if with_config_gpu_params is True:
+                    config_gpu_params()
+                if with_gpu_mode_process is True:
+                    gpu_mode_process()
+                target_devices = ['cuda:{}'.format(i) for i in range(torch.cuda.device_count())]
+            else:
+                logging.info(f"CUDA is not available. Start {QTD_CORES} CPU worker")
+                target_devices = ['cpu']*QTD_CORES
+        
         pool = embedder.start_multi_process_pool()
-        corpus_embeddings = embedder.encode_multi_process(corpus, pool)
+
+        print(f'get_context: {mp.get_context()}')
+        print(f'get_all_sharing_strategies: {mp.get_all_sharing_strategies()}')
+        print(f'get_start_method: {mp.get_start_method()}')
+
+        corpus_embeddings = embedder.encode_multi_process(
+            sentences=corpus, 
+            pool=pool, 
+            batch_size=32, 
+            chunk_size=n_chunk_size
+        )
+        
         embedder.stop_multi_process_pool(pool)
         end = time.time()
+        
         logging.info(f"{end - start:.3f}s")
         return corpus_embeddings, embedder
 
@@ -1410,7 +1518,8 @@ def apply_parser_clean(row, forward_from: Literal['','clean','strip'] = '') -> s
 
 
 def do_corpus_embeddings(
-    corpus_cdados: pd.DataFrame, col: str, embedder: SentenceTransformer
+    # corpus_cdados: pd.DataFrame, col: str, embedder: SentenceTransformer
+    corpus: pd.Series, col: str
 ) -> np.ndarray:
     """Executa encoding e embedding dos sintagmas nominais
 
@@ -1423,15 +1532,20 @@ def do_corpus_embeddings(
     ----------
         corpus_embeddings: np.ndarray
     """
-    return embedder.encode(corpus_cdados[col].values, convert_to_tensor=True)
+
+    embedder = SentenceTransformer("multi-qa-mpnet-base-cos-v1")
+    return embedder.encode(corpus[col].values, convert_to_tensor=True)
 
 
+@st.cache(allow_output_mutation=True)
 def do_semantic_information_retrieval_gpu(
     sentences1: pd.DataFrame,
     sentences2: pd.DataFrame,
     corpus_embeddings: np.ndarray,
     top_k: int,
     embedder: SentenceTransformer,
+    mvp: bool = False,
+    print_results: bool = True,
 ) -> None:
     """Consulta informação
 
@@ -1449,7 +1563,16 @@ def do_semantic_information_retrieval_gpu(
         None
             Imprime os top 'k' resultados
     """
-    sentences1['keywords'] = sentences1['keywords'].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
+    if type(sentences1) == str:
+        sentences1 = pd.DataFrame(
+            {
+                'keywords':[sentences1]
+            }
+        )
+    if type(sentences1) == pd.DataFrame:
+        sentences1['keywords'] = sentences1['keywords'].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
+    else:
+        raise TypeError('sentences1 must be a pd.DataFrame')
     for i, _ in enumerate(sentences1):
         query_embedding = embedder.encode(
             sentences1.iloc[i, 0], convert_to_tensor=True
@@ -1459,19 +1582,20 @@ def do_semantic_information_retrieval_gpu(
             query_embedding, corpus_embeddings, top_k=top_k
         )[0]
 
-        print("====================== \n")
-        print(
-            "Consulta: \n\n",
-            sentences1.iloc[i, 0],
-        )
-        print("\n====================== \n")
+        if print_results:
+            print("====================== \n")
+            print(
+                "Consulta: \n\n",
+                sentences1.iloc[i, 0],
+            )
+            print("\n====================== \n")
 
-        print(
-            "Top "
-            + str(top_k)
-            + " descrições mais semelhantes no corpus:\n"
-        )
-        print("======================")
+            print(
+                "Top "
+                + str(top_k)
+                + " descrições mais semelhantes no corpus:\n"
+            )
+            print("======================")
 
         # return top_results
         idx = 0
@@ -1489,16 +1613,20 @@ def do_semantic_information_retrieval_gpu(
             row = df_semantic_return[
                 df_semantic_return['corpus_id'] == resp_semantic["corpus_id"]
             ]
-            print(
-                'Resultados:\n',
-                str(row.iloc[-1]['resultados']),
-                '\n\nCorpus:\n',
-                str(row.iloc[-1]['corpus']),
-                "\n\n=== SEMANTIC SEARCH ===\n",
-                "(Score: %.4f)" % (resp_semantic["score"]),
-            )
-            print("=======================\n")
-        return df_semantic_return
+            if print_results:
+                print(
+                    'Resultados:\n',
+                    str(row['resultados']),
+                    '\n\nCorpus:\n',
+                    str(row['features_corpus']),
+                    "\n\n=== SEMANTIC SEARCH ===\n",
+                    "(Score: %.4f)" % (resp_semantic["score"]),
+                )
+                print("=======================\n")
+        if mvp:
+            return df_semantic_return, sentences1['keywords']
+        else:
+            return df_semantic_return
         # break  #
 
 
@@ -1739,11 +1867,10 @@ def run_model_OvR_onehot(
     y=df_y_new
 
     if sparse:
-        X = sp.csr_matrix(X)
-        # y=sp.csr_matrix(y)
-    
+        X = sp.csr_matrix(X)    
+
     if stratify:
-        X_train, y_train, X_test, y_test = iterative_train_test_split(X, y.values, test_size=test_size)
+        X_train, y_train, X_test, y_test = iterative_train_test_split(X, y.values, test_size = test_size)
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=123)
     
