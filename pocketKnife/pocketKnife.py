@@ -30,8 +30,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn.linear_model import LogisticRegression, SGDClassifier, PassiveAggressiveClassifier
 
-import streamlit as st
-
 
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%m-%Y %H:%M:%S',
@@ -115,8 +113,6 @@ class SaveLoad():
             self.to_pickle(embedder, self.folder_models_path / f'{used_embedder}_{dataset_filter}_embedder.dat')
             self.to_pickle(corpus_embeddings, self.folder_models_path / f'{used_embedder}_{dataset_filter}_corpus_embeddings.dat')
 
-
-    @st.cache(allow_output_mutation=True)
     def load_embedder_and_corpus_embeddings(self,
         used_embedder: str,
         dataset_filter: str) -> Tuple[np.ndarray, SentenceTransformer]:
@@ -137,11 +133,11 @@ hour_patterns = r"(\d{1,2}:\d{1,2})|(\d{1,2}h\d{1,2})|(\d{1,2}x\d{1,2})|(\d{1,2}
 ## Universal POS tags: https://universaldependencies.org/u/pos/                 ##
 ##################################################################################
 list_remove_tags = [
-    "PRON",
+    # "PRON",
     "PUNCT",
     "CCONJ",
     "DET",
-#     "ADP",
+    # "ADP",
     "INTJ",
     "NUM",
     "SPACE",
@@ -902,33 +898,33 @@ def add_rules(
     old_patterns = [
         ## sintagmas nominais nível 5
         [
-            "NOUM",
-            "NOUM",
-            "NOUM",
-            "NOUM",
+            "NOUN",
+            "NOUN",
+            "NOUN",
+            "NOUN",
             "ADJ",
         ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         ## sintagmas nominais nível 4
         [
-            "NOUM",
-            "NOUM",
-            "NOUM",
+            "NOUN",
+            "NOUN",
+            "NOUN",
             "ADJ",
         ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         ## sintagmas nominais nível 3
         [
-            "NOUM",
+            "NOUN",
             "ADJ",
             "ADJ",
         ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         [
-            "NOUM",
-            "NOUM",
+            "NOUN",
+            "NOUN",
             "ADJ",
         ],  ## nova regra - existem ocorrências de termos importantes com esta regra
         ["NOUN", "ADJ", "NOUN"],
         ["NOUN", "ADJ", "PROPN"],
-        ["PROPN", "NOUM", "ADJ"],
+        ["PROPN", "NOUN", "ADJ"],
         ["PROPN", "ADJ", "NOUN"],
         ## sintagmas_nominais nível 2
         ["PROPN", "ADJ"], 
@@ -945,19 +941,19 @@ def add_rules(
 
     patterns = [  
         ## sintagmas nominais nível 3
-        ["PROPN","ADP","NOUM"],
-        ["PROPN","ADJ","NOUM"],
-        ["NOUM","ADJ","NOUM"],
+        ["PROPN","ADP","NOUN"],
+        ["PROPN","ADJ","NOUN"],
+        ["NOUN","ADJ","NOUN"],
 
         ## sintagmas nominais nível 2
         ["PROPN","PROPN"],
         ["PROPN","VERB"],
-        ["NOUM","VERB"],
-        ["NOUM","ADJ"],
+        ["NOUN","VERB"],
+        ["NOUN","ADJ"],
         ["PROPN","ADJ"],
-        ["NOUM","PROPN"],    
-        ["NOUM","NOUN"],
-        ["PROPN","NOUM"],
+        ["NOUN","PROPN"],    
+        ["NOUN","NOUN"],
+        ["PROPN","NOUN"],
 
         ## sintagmas nominais nível 1
         ["NOUN"],
@@ -1537,7 +1533,6 @@ def do_corpus_embeddings(
     return embedder.encode(corpus[col].values, convert_to_tensor=True)
 
 
-@st.cache(allow_output_mutation=True)
 def do_semantic_information_retrieval_gpu(
     sentences1: pd.DataFrame,
     sentences2: pd.DataFrame,
@@ -1665,7 +1660,7 @@ def do_drop_fields_nan(df, df_nan):
     return df_clean.reset_index(drop=True)
 
 
-def do_identify_all_field_nan(df):
+def do_identify_nan_by_cols(df):
     df_nan = df.T.parallel_apply(lambda x: x.nunique())
     max_ = df_nan.max()
     df_nan = df[df_nan.values < max_]
@@ -1853,7 +1848,6 @@ def run_model_OvR_onehot(
     from sklearn.preprocessing import StandardScaler, PowerTransformer, MinMaxScaler
     from sklearn.svm import LinearSVC
     import xgboost as xgb
-    
     from sklearn.multiclass import OneVsRestClassifier
     from sklearn.multioutput import MultiOutputClassifier, ClassifierChain
     from sklearn.pipeline import Pipeline, make_pipeline
