@@ -1534,6 +1534,7 @@ def do_corpus_embeddings(
 
 
 def do_semantic_information_retrieval_gpu(
+    col: str,
     sentences1: pd.DataFrame,
     sentences2: pd.DataFrame,
     corpus_embeddings: np.ndarray,
@@ -1610,8 +1611,8 @@ def do_semantic_information_retrieval_gpu(
             ]
             if print_results:
                 print(
-                    'Resultados:\n',
-                    str(row['resultados']),
+                    'Texto:\n',
+                    str(row[col]),
                     '\n\nCorpus:\n',
                     str(row['features_corpus']),
                     "\n\n=== SEMANTIC SEARCH ===\n",
