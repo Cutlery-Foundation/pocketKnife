@@ -1309,7 +1309,7 @@ def parallelize_anything(
 
 def do_corpus_embeddings_gpu(
     corpus: pd.Series, 
-    col: str,
+    used_embedder: Literal['multi-qa-mpnet-base-cos-v1','multi-qa-mpnet-base-dot-v1' , 'all-mpnet-base-v2', None]='multi-qa-mpnet-base-cos-v1',
     target_devices: Literal['cuda', 'cpu', None]='cuda',
     with_gpu_mode_process: bool=False,
     with_config_gpu_params: bool=False,
@@ -1347,7 +1347,7 @@ def do_corpus_embeddings_gpu(
         ):
             ## https://discuss.pytorch.org/t/keep-getting-cuda-oom-error-with-pytorch-failing-to-allocate-all-free-memory/133896/6
             os.environ["PYTORCH_CUDA_ALLOC_CONF"]=f'max_split_size_mb:{max_split_size_mb}'
-            mp.set_start_method('spawn')
+            multiprocessing.set_start_method(f'{set_start_method}', force=True)
 
         def config_gpu_params(
             num_gpus: Union[int, list] = 1,
@@ -1373,8 +1373,7 @@ def do_corpus_embeddings_gpu(
 
         start = time.time()
 
-        # embedder = SentenceTransformer("multi-qa-mpnet-base-cos-v1")
-        embedder = SentenceTransformer("multi-qa-mpnet-base-dot-v1")
+        embedder = SentenceTransformer(used_embedder)
 
         if target_devices is None:
             if torch.cuda.is_available():
