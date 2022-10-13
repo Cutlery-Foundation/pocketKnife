@@ -110,14 +110,14 @@ class SaveLoad():
         corpus_embeddings: np.ndarray,
         used_embedder: str,
         dataset_filter: str) -> None:
-            self.to_pickle(embedder, self.folder_models_path / f'{used_embedder}_{dataset_filter}_embedder.dat')
-            self.to_pickle(corpus_embeddings, self.folder_models_path / f'{used_embedder}_{dataset_filter}_corpus_embeddings.dat')
+            self.to_pickle(embedder, f'{used_embedder}_{dataset_filter}_embedder.dat')
+            self.to_pickle(corpus_embeddings, f'{used_embedder}_{dataset_filter}_corpus_embeddings.dat')
 
     def load_embedder_and_corpus_embeddings(self,
         used_embedder: str,
         dataset_filter: str) -> Tuple[np.ndarray, SentenceTransformer]:
-            embedder = self.from_pickle(self.folder_models_path / f'{used_embedder}_{dataset_filter}_embedder.dat')
-            corpus_embeddings = self.from_pickle(self.folder_models_path / f'{used_embedder}_{dataset_filter}_corpus_embeddings.dat')
+            embedder = self.from_pickle(f'{used_embedder}_{dataset_filter}_embedder.dat')
+            corpus_embeddings = self.from_pickle(f'{used_embedder}_{dataset_filter}_corpus_embeddings.dat')
             return corpus_embeddings, embedder
 
 # qtd_cores = multiprocessing.cpu_count() - 1
