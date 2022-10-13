@@ -173,7 +173,7 @@ def cleanString(series: str) -> str:
     Ref replacement_dict:
     https://ajuda.locaweb.com.br/wiki/caracteres-acentuados-hospedagem-de-sites/
     """
-    from unidecode import unidecode
+    from unidecode import unidecode_expect_ascii
     replacement_dic = {
         "&aacute;": "a",
         "&eacute;": "e",
@@ -262,7 +262,7 @@ def cleanString(series: str) -> str:
     for x, y in replacement_dic.items():
         series = str(series).lower()
         series = series.replace(x, y)
-        series = unidecode(series)
+        series = unidecode_expect_ascii(series)
     return series
 
 

@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='pocketKnife',
-    version='0.0.12',
+    version='0.0.13',
     maintainer='Cutlery Foundation',
     maintainer_email='cutlery.foundation@gmail.com',
     description='A collection of useful functions for any data scientist working with NLP',
@@ -21,7 +21,7 @@ setuptools.setup(
         # 'ipython',
         'ipywidgets==8.0.2',
         'ipympl',
-        'scipy==1.7.3', #1.9.1
+        'scipy>=1.7.3', #1.9.1
         'wordcloud==1.8.2.2',
         'black==22.10.0',
         'beautifulsoup4==4.11.1',
@@ -34,6 +34,8 @@ setuptools.setup(
         # 'ipykernel==6.16.0',
         'seaborn==0.12.0',
         'pyarrow==9.0.0',
+        'unidecode',
+        'py3nvml'
     ],
     extras_require={
         'cuda': [
