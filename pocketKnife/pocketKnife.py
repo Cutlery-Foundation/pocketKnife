@@ -1844,6 +1844,7 @@ def run_model_OvR_onehot(
     stratify: bool = False,
     sparse: bool = False,
     model_function = SGDClassifier(),
+    classifier_chain_ascending: bool = False,
     ):
     from sklearn.preprocessing import StandardScaler, PowerTransformer, MinMaxScaler
     from sklearn.svm import LinearSVC
@@ -1887,7 +1888,7 @@ def run_model_OvR_onehot(
     
     chain_model = ClassifierChain(
         clf,
-        order=df_y_new.sum().reset_index(drop=True).sort_values(ascending=False).index
+        order=df_y_new.sum().reset_index(drop=True).sort_values(ascending=classifier_chain_ascending).index
     ).fit(X_train, y_train)
     print_all_important_metrics(chain_model, X_test, y_test, f'Classifier Chain{[" - Sem Stratify"," - Stratify"][stratify]}')
     return y_train, y_test, y.columns, ovr_model, multi_model, chain_model
