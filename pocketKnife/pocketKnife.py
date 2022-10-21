@@ -1787,7 +1787,7 @@ def filter_onehot_by_frequency(
     print(f'df_x_filter.shape: {df_x_filter.shape}')
     print(f'df_y_filter.shape: {df_y_filter.shape}')
     print(f'min_freq: {min_freq}')
-    return df_x_filter, df_y_filter
+    return df_x_filter.reset_index(drop=True), df_y_filter.reset_index(drop=True)
 
 
 def print_all_important_metrics(model, X_test, y_test, classifier_description: str):
