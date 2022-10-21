@@ -1533,7 +1533,7 @@ def do_corpus_embeddings(
 
 
 def do_semantic_information_retrieval_gpu(
-    col: str,
+    print_col: str,
     sentences1: pd.DataFrame,
     sentences2: pd.DataFrame,
     corpus_embeddings: np.ndarray,
@@ -1541,6 +1541,7 @@ def do_semantic_information_retrieval_gpu(
     embedder: SentenceTransformer,
     mvp: bool = False,
     print_results: bool = True,
+    sentences_1_col_name: str = 'keywords'
 ) -> None:
     """Consulta informação
 
@@ -1561,11 +1562,11 @@ def do_semantic_information_retrieval_gpu(
     if type(sentences1) == str:
         sentences1 = pd.DataFrame(
             {
-                'keywords':[sentences1]
+                sentences_1_col_name : [sentences1]
             }
         )
     if type(sentences1) == pd.DataFrame:
-        sentences1['keywords'] = sentences1['keywords'].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
+        sentences1[sentences_1_col_name] = sentences1[sentences_1_col_name].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
     else:
         raise TypeError('sentences1 must be a pd.DataFrame')
     for i, _ in enumerate(sentences1):
@@ -1611,7 +1612,7 @@ def do_semantic_information_retrieval_gpu(
             if print_results:
                 print(
                     'Texto:\n',
-                    str(row[col]),
+                    str(row[print_col]),
                     '\n\nCorpus:\n',
                     str(row['features_corpus']),
                     "\n\n=== SEMANTIC SEARCH ===\n",
@@ -1619,7 +1620,7 @@ def do_semantic_information_retrieval_gpu(
                 )
                 print("=======================\n")
         if mvp:
-            return df_semantic_return, sentences1['keywords']
+            return df_semantic_return, sentences1[sentences_1_col_name]
         else:
             return df_semantic_return
         # break  #
