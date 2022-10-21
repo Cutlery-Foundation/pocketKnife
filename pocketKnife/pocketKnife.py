@@ -1541,7 +1541,8 @@ def do_semantic_information_retrieval_gpu(
     embedder: SentenceTransformer,
     mvp: bool = False,
     print_results: bool = True,
-    sentences_1_col_name: str = 'keywords'
+    sentences_1_col_name: str = 'keywords',
+    sort_by_score: bool = True,
 ) -> None:
     """Consulta informação
 
@@ -1602,7 +1603,9 @@ def do_semantic_information_retrieval_gpu(
             # left_on='index',
             left_index=True,
             right_on='corpus_id'
-        ).sort_values(by='score', ascending=False).reset_index(drop=True)
+        )
+        if sort_by_score:
+            df_semantic_return = df_semantic_return.sort_values(by='score', ascending=False).reset_index(drop=True)
         # return df_semantic_return
         for resp_semantic in top_results:
             ## semantic search
