@@ -1567,12 +1567,13 @@ def do_semantic_information_retrieval_gpu(
             }
         )
     if type(sentences1) == pd.DataFrame:
-        sentences1[sentences_1_col_name] = sentences1[sentences_1_col_name].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
+        query = pd.DataFrame(columns=sentences_1_col_name)
+        query[sentences_1_col_name] = sentences1[sentences_1_col_name].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
     else:
         raise TypeError('sentences1 must be a pd.DataFrame')
-    for i, _ in enumerate(sentences1):
+    for i, _ in enumerate(query):
         query_embedding = embedder.encode(
-            sentences1.iloc[i, 0], convert_to_tensor=True
+            query.iloc[i, 0], convert_to_tensor=True
         )
         # usar semantic_search para encontrar os k melhores scores
         top_results = util.semantic_search(
@@ -1583,7 +1584,7 @@ def do_semantic_information_retrieval_gpu(
             print("====================== \n")
             print(
                 "Consulta: \n\n",
-                sentences1.iloc[i, 0],
+                query.iloc[i, 0],
             )
             print("\n====================== \n")
 
@@ -1623,7 +1624,7 @@ def do_semantic_information_retrieval_gpu(
                 )
                 print("=======================\n")
         if mvp:
-            return df_semantic_return, sentences1[sentences_1_col_name]
+            return df_semantic_return, query[sentences_1_col_name]
         else:
             return df_semantic_return
         # break  #
