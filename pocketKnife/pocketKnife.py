@@ -1567,8 +1567,11 @@ def do_semantic_information_retrieval_gpu(
             }
         )
     if type(sentences1) == pd.DataFrame:
-        query = pd.DataFrame(columns=sentences_1_col_name)
-        query[sentences_1_col_name] = sentences1[sentences_1_col_name].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
+        query = pd.DataFrame(
+            {
+                sentences_1_col_name : sentences1[sentences_1_col_name].apply(lambda x: apply_parser_clean(x, forward_from='clean'))
+            }
+        )
     else:
         raise TypeError('sentences1 must be a pd.DataFrame')
     for i, _ in enumerate(query):
