@@ -1464,7 +1464,11 @@ def default_replace_missing_url(row):
             return row
 
 
-def apply_parser_clean(row, forward_from: Literal['','clean','strip'] = '') -> str:
+def apply_parser_clean(
+    row, 
+    forward_from: Literal['','clean','strip'] = '',
+    padrao_json=True
+) -> str:
     import json
     from bs4 import BeautifulSoup
 
@@ -1475,23 +1479,32 @@ def apply_parser_clean(row, forward_from: Literal['','clean','strip'] = '') -> s
             html_clean = row
             forward_from_history = ['']
             if(forward_from in forward_from_history):
-                html = json.loads(row)[2]['url']
+                if padrao_json:
+                    html_clean = json.loads(row)[2]['url']
+                    example = ['<','>']
+                    example_replace = [' <','> ']
+                    for i, x in enumerate(example):
+                        html_clean = html_clean.replace(x,example_replace[i])
+                    soup = BeautifulSoup(html_clean, 'html.parser')
+                    html_clean = soup.get_text()
+                    
                 example = ['<','>']
                 example_replace = [' <','> ']
-                html_clean = html
                 for i, x in enumerate(example):
                     html_clean = html_clean.replace(x,example_replace[i])
-                soup = BeautifulSoup(html_clean, 'html.parser')
+                soup = BeautifulSoup(html_clean, 'lxml')
                 html_clean = soup.get_text()
 
-                sub_txts = ['5 8 8 17','5.8.8.17']
-                for sub in sub_txts:
-                    x = html_clean.find(sub)
-                    if(x!=-1):
-                        html_clean = html_clean[x+len(sub):]
+            sub_txts = ['5 8 8 17','5.8.8.17']
+            for sub in sub_txts:
+                x = html_clean.find(sub)
+                if(x!=-1):
+                    html_clean = html_clean[x+len(sub):]
+                        
             forward_from_history.append('clean')
             if(forward_from in forward_from_history):
                 html_clean = cleanString(html_clean)
+                
             forward_from_history.append('strip')
             if(forward_from in forward_from_history):                
                 html_clean = " ".join([
@@ -1500,7 +1513,8 @@ def apply_parser_clean(row, forward_from: Literal['','clean','strip'] = '') -> s
                     if (len(bigger_word) > 1)
                     if bigger_word.count(bigger_word[0]) != len(bigger_word)
                 ])
-                return(html_clean)
+            return (html_clean)
+        
         except KeyError as e:
             # print(e.with_traceback, e, row)
             return 'apply_parser_clean_KeyError'
