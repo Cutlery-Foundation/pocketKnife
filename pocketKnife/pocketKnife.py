@@ -671,7 +671,8 @@ def remove_pos_tags_list(
             if word.pos_ not in list_remove_tags:
                 if words == "":
                     words += word.text
-                words += " " + word.text
+                else:
+                    words += " " + word.text
         words_list.append(words)
     df = pd.DataFrame(words_list)
     return df
