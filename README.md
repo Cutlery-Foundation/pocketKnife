@@ -12,10 +12,10 @@
 
 ```bash
 # install requirements
-python -m pip install --upgrade setuptools twine
+python -m pip install --upgrade setuptools twine pip setuptools wheel
 
 # upgrade pip version [GUI]
-edit setup.py file line <version='0.x.x'>
+# edit setup.py file line <version='0.x.x'>
 
 # delete old dists [CLI]
 rm -rf dist/*
